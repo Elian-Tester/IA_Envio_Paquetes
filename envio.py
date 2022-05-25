@@ -82,13 +82,20 @@ class Envio():
             print(modificado)
 
         # -------------------------------------------------------------------------------
-        print("\n -------------------- Agrega Faltantes [ incompleta ] ----------------------------\n") 
-        faltantes_agregados_list = self.agregarFaltantes(cruza_faltantes_list, cruza_cortes_list)
+        print("\n -------------------- Agrega Faltantes [ Completa ] ----------------------------\n")
+        individuos_completos_list = self.agregarFaltantes(cruza_faltantes_list, cruza_cortes_list)
 
         print("\nImprimiendo complementados: \n")
-        for dato in faltantes_agregados_list:
+        for dato in individuos_completos_list:
             print(dato)
         
+        print("\n -------------------- Iniciar Mutacion [ incompleta ] ----------------------------\n")
+        
+        individuoMutado = self.mutarIndividuos(individuos_completos_list)
+
+        print("\nMuestra mutados:\n ")
+        for x in individuoMutado:
+            print(x)
 
 
     def crearIndividuos(self, pI, numPaquetes):
@@ -367,7 +374,43 @@ class Envio():
 
         return cruza_completa
 
+    def mutarIndividuos(self, individuos_mutar):
+        print("\nIniciando mutacion:\n")
 
+        mutados_list = []
+        for individuo in individuos_mutar:
+            individuo_mutado = self.agregarMutacionGen(individuo)
+            mutados_list.append(individuo_mutado)
+
+        return mutados_list
+
+    def agregarMutacionGen(self, individuos_mutar):
+        print("\nMutar Gen: \n")
+        probGen = 0.5;
+
+        for x in range(1, len(individuos_mutar) ):
+            print( "\n >> dato mutar:",str(individuos_mutar[ x-1 ]))
+            probabilidadMutacionGen = (random.randint(1, 100)) / 100
+            print(">> individuo original: ", str(individuos_mutar) )
+            
+            if (probabilidadMutacionGen < probGen):                
+                lugar = (random.randint(1, len(individuos_mutar)))
+                print("\nlugar a: ", str(lugar), " x:", str(x)," \n")
+                while lugar == x and lugar > 0:
+                    lugar = (random.randint(1, len(individuos_mutar)))
+                print("\nlugar b: ", str(lugar), " x:", str(x)," \n")
+
+                inter_1 = individuos_mutar[x-1]
+                inter_2 = individuos_mutar[lugar-1]
+
+                individuos_mutar[x-1] = inter_2
+                individuos_mutar[lugar-1] = inter_1
+                print("\n>> mutado: ", str( individuos_mutar ) , " + lugar: ", lugar," \n")
+            else:
+                print("\n>> No muto: ", str( individuos_mutar )," \n")
+        
+        return individuos_mutar
+            
 
 
 

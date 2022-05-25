@@ -16,7 +16,7 @@ from pymysql import NULL
 
 from envio import Envio
 import re
-#import win32api,win32con
+import win32api,win32con
 
 
 
