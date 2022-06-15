@@ -295,11 +295,14 @@
    <widget class="QTextEdit" name="paquetesFinalLabel">
     <property name="geometry">
      <rect>
-      <x>800</x>
+      <x>370</x>
       <y>320</y>
-      <width>371</width>
+      <width>801</width>
       <height>431</height>
      </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
     </property>
     <property name="styleSheet">
      <string notr="true">border-color: rgb(198, 0, 0);

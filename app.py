@@ -17,6 +17,7 @@ from pymysql import NULL
 from envio import Envio
 import re
 import win32api,win32con
+import csv
 
 
 
@@ -33,6 +34,10 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
     ITERACION_GENERACION = 1
     BANDERA_MAX = True
     BANDERA_FIN_HISTORICO = False
+
+    NUEVA_GENERACION = []
+    DATOS_GRAFICAR = []
+
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
@@ -56,13 +61,13 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
         #self.costoText.Text() 
     
     def autoLlenar(self):
-        self.poblacionInicialText.setText('3')
-        self.poblacionMaximaText.setText('6')
+        self.poblacionInicialText.setText('4')
+        self.poblacionMaximaText.setText('8')
         self.numeroPaquetes.setText('8')
-        self.tamanoContenedor.setText('7')
-        self.decendenciaText.setText('60')
-        self.mutacionIndividuoText.setText('5')
-        self.mutacionGenText.setText('4')
+        self.tamanoContenedor.setText('14')
+        self.decendenciaText.setText('90')
+        self.mutacionIndividuoText.setText('50')
+        self.mutacionGenText.setText('15')
         self.generacionesText.setText('3')
         self.espacioText.setText('2')
         self.costoText.setText('1')
@@ -109,20 +114,64 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
         print('Envio')
 
         env = Envio()
-        env.enviando(datos)        
+        todas_generaciones = []
+        generacion_original = []
+        tipos_paquetes_list = self.leerCsv()
+        tipos_paquetes_list = env.tipoPaquete(tipos_paquetes_list)
+
+        diccionario_espacios_list = env.diccionarioEspacios( tipos_paquetes_list, int(datos[2]) )
+
+        for x in range( int(datos[7]) ):
+            datos_paquetes = env.enviando(datos, self.NUEVA_GENERACION, diccionario_espacios_list)
+            print("\n Entra a for de generaciones \n")
+
+            self.NUEVA_GENERACION = datos_paquetes[0]
+            todas_generaciones.append( {"generacion": datos_paquetes[0], "Graficar": datos_paquetes[1] } )
+            self.DATOS_GRAFICAR.append( datos_paquetes[1] )
+
+            generacion_original = datos_paquetes[2]
+        
+        print("\nMostrar en vista: ")
+        texto_generaciones = ""
+        conta_gen=0
+        texto_generaciones += "\n__ Generacion original: \n"+ str(generacion_original) + "\n"
+        for x in todas_generaciones:
+            conta_gen+=1
+
+            texto_generaciones += f"__ Generacion {conta_gen} \n"
+            for y in x["generacion"]:
+                texto_generaciones += str(y) +"  "
+            grafi = x["Graficar"]
+            texto_generaciones += "\n maximo: "+ str(grafi["maximo"]) +"\n minimo: "+str(grafi["minimo"])+"\n promedio: "+ str(grafi["promedio"])+"\n \n"
+        
+        self.NUEVA_GENERACION.clear()
+        self.paquetesFinalLabel.setText(texto_generaciones)
     
+    def leerCsv(self):
+        print("Leer csv\n")
+        
+        results = []
+        with open('201241.csv') as File:
+            reader = csv.DictReader(File)
+            for row in reader:
+                results.append(row)
+                print(row)
+            #print (results)        
+
+        return results
+
+
     def validarCampos(self, campos):
         print("campos")
         
         for validar in campos:            
             num_format = re.compile(r'^[0-9][0-9]*$')        
             valorA = re.match(num_format, validar)
-            if valorA:
-                print(f"poblacion incial, correcta {validar}")
-            else:
+            if valorA == False:
+                #print(f"poblacion incial, correcta {validar}")
                 print(f"poblacion incial, incorrecta {validar}")
                 self.mensajeAlert(validar)
-                return False
+                return False            
         
         return True
 

@@ -5,8 +5,9 @@ from typing import final
 
 class Envio():
 
+    GENERACION_ORIGINAL = []
     ABECEDARIO = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","Ñ","O","P","Q","R","S","T","U","V","W","X","Y","Z"]
-    def enviando(self, dato):        
+    def enviando(self, dato, generacion_anterior, diccionario_espacios_list):        
         datos = {
             "pI": dato[0],
             "pM": dato[1],
@@ -22,11 +23,15 @@ class Envio():
 
         print( str(datos) )
 
-        tipo_paquetes_list = self.tipoPaquete()
+        #tipo_paquetes_list = self.tipoPaquete()
 
-        diccionario_espacios_list = self.diccionarioEspacios(tipo_paquetes_list, int(dato[2]) )
+        #diccionario_espacios_list = self.diccionarioEspacios(tipo_paquetes_list, int(dato[2]) )
 
-        individuos = self.crearIndividuos( int(dato[0]), int(dato[2]))
+        if ( len(generacion_anterior) == 0):            
+            individuos = self.crearIndividuos( int(dato[0]), int(dato[2]))
+            self.GENERACION_ORIGINAL = individuos
+        else:
+            individuos = generacion_anterior
 
         
         print('\nDiccionario espacios')
@@ -37,7 +42,7 @@ class Envio():
         for x in individuos:
             print(x)
 
-        seleccion_TcT_list = self.seleccion( int(dato[0]) )
+        seleccion_TcT_list = self.seleccion( len(individuos) )
 
         print(seleccion_TcT_list)
 
@@ -89,13 +94,34 @@ class Envio():
         for dato in individuos_completos_list:
             print(dato)
         
-        print("\n -------------------- Iniciar Mutacion [ incompleta ] ----------------------------\n")
+        print("\n -------------------- Iniciar Mutacion [ Completa ] ----------------------------\n")
         
-        individuoMutado = self.mutarIndividuos(individuos_completos_list)
+        individuoMutado_list = self.mutarIndividuos(individuos_completos_list, float(datos["mutGen"]), float(datos["mutIndividuo"]) )
 
         print("\nMuestra mutados:\n ")
-        for x in individuoMutado:
+        for x in individuoMutado_list:
             print(x)
+        
+        print("\n -------------------- PODA [ incompleta ] ----------------------------\n")
+
+        Poda_list = self.verificar_PODA( int(datos["pM"]), individuoMutado_list , individuos, diccionario_espacios_list, int(datos["tamContenedor"]))
+
+        print("\nMuestra Poda final:\n ")
+
+        # {"Graficar": datos_Graficar, "Individuos_generacion": podado}
+        print(Poda_list)
+
+        generacion_actual = []
+        print("\n-- Individuos_generacion --")
+        for individuo in Poda_list[0]["Individuos_generacion"]:
+            #print(individuo["Individuo"])
+            print(individuo)
+            generacion_actual.append(individuo["Individuo"])
+        
+        print("\n-- Graficar --")        
+        print(Poda_list[0]["Graficar"])
+
+        return [generacion_actual, Poda_list[0]["Graficar"], self.GENERACION_ORIGINAL]
 
 
     def crearIndividuos(self, pI, numPaquetes):
@@ -108,29 +134,22 @@ class Envio():
 
         return individuos_list
 
-    def tipoPaquete(self):
+    def tipoPaquete(self, tipo_paquetes):
         print("Tipo paquetes")
-
-        tipos_paquete_lista = []
-
+        for x in tipo_paquetes:
+            x["Espacio"] = int(x["Espacio"])
+            x["Costo"] = int(x["Costo"])        
         
-        for i in range(1, 4):
-            espacio = random.randint(1, 10)
-            costo = random.randint(1, 20)
-
-            paquete = {"Tipo": self.ABECEDARIO[i-1], "Espacio": espacio, "Costo": costo}
-            tipos_paquete_lista.append(paquete)
-        
-        return tipos_paquete_lista
+        return tipo_paquetes
 
     def diccionarioEspacios(self, tipo_paquetes_list, numPaquetes):
         diccionario_espacios_list = []
 
         for indice in range(0, numPaquetes):            
-            print(f"\nindice {indice}")
+            #print(f"\nindice {indice}")
             tipoRand = random.randint(0, len(tipo_paquetes_list)-1)        
             diccionario_espacios_list.append(tipo_paquetes_list[tipoRand])
-        
+
         diccionario_espacios_list = sorted(diccionario_espacios_list, key=lambda d: d['Tipo'], reverse=False)
         return diccionario_espacios_list
     
@@ -189,23 +208,25 @@ class Envio():
     def combinacion(self, seleccion, individuos):
         parejas = []
         print('\n combinacion')
-        
+        print("---->>>   Lista parejas: <<<-----")
         for pareja in seleccion:
             decendencia = ( random.randint(1, 100) ) / 100
+            #print("pareja :> ",pareja)
             parejas.append({
                 "id1":individuos[ int(pareja[0])-1 ],
                 "id2":individuos[ int(pareja[1])-1 ],
                 "decendencia": decendencia
-                })
+                })            
+            print(parejas)
 
         return parejas
 
     def verificarDecendencia(self, parejas_list,decendencia):
         cruzar = []
-        print("\nDecendencia")
-        print(parejas_list)
+        """ print("\nDecendencia")
+        print(parejas_list) """
         decendencia = decendencia/100
-        print(decendencia)
+        print(str(decendencia), "%")
 
         for pareja in parejas_list:
             print( str(pareja['decendencia']) +" <= "+ str(decendencia))
@@ -261,7 +282,7 @@ class Envio():
         cruzado = []
         for x in corte_auxiliar:
             #print(x)            
-            print("\n Corte: ")
+            #print("\n Corte: ")
                     
             corte_1 = x['Cortes'][0]
             corte_2 = x['Cortes'][1]
@@ -364,7 +385,7 @@ class Envio():
                 for i in datoFalta:
                     if(j == i):
                         existe = True
-                        print("encontrado:", str(j))
+                        #print("encontrado:", str(j))
                 if (existe==False):
                     print("Agregado:", str(j))
                     datoFalta.append(j)
@@ -374,26 +395,35 @@ class Envio():
 
         return cruza_completa
 
-    def mutarIndividuos(self, individuos_mutar):
+    def mutarIndividuos(self, individuos_mutar, mutGen, mutIndividuo):
         print("\nIniciando mutacion:\n")
+
+        mutIndividuo = mutIndividuo/100        
 
         mutados_list = []
         for individuo in individuos_mutar:
-            individuo_mutado = self.agregarMutacionGen(individuo)
-            mutados_list.append(individuo_mutado)
+            
+            probabilidadMutacionIndi = (random.randint(1, 100)) / 100
+
+            if (probabilidadMutacionIndi < mutIndividuo ):
+                individuo_mutado = self.agregarMutacionGen(individuo, mutGen)
+                mutados_list.append(individuo_mutado)
+            else:
+                mutados_list.append(individuo)
 
         return mutados_list
 
-    def agregarMutacionGen(self, individuos_mutar):
-        print("\nMutar Gen: \n")
-        probGen = 0.5;
+    def agregarMutacionGen(self, individuos_mutar, mutGen):
+        print("\nMutar Gen: \n")        
+        mutGen = mutGen/100
+        print( str(mutGen), "%")
 
         for x in range(1, len(individuos_mutar) ):
-            print( "\n >> dato mutar:",str(individuos_mutar[ x-1 ]))
+            #print( "\n >> dato mutar: __________________ ",str(individuos_mutar[ x-1 ]))
             probabilidadMutacionGen = (random.randint(1, 100)) / 100
-            print(">> individuo original: ", str(individuos_mutar) )
+            #print(">> individuo original: ", str(individuos_mutar) )
             
-            if (probabilidadMutacionGen < probGen):                
+            if (probabilidadMutacionGen < mutGen):                
                 lugar = (random.randint(1, len(individuos_mutar)))
                 print("\nlugar a: ", str(lugar), " x:", str(x)," \n")
                 while lugar == x and lugar > 0:
@@ -405,12 +435,107 @@ class Envio():
 
                 individuos_mutar[x-1] = inter_2
                 individuos_mutar[lugar-1] = inter_1
-                print("\n>> mutado: ", str( individuos_mutar ) , " + lugar: ", lugar," \n")
-            else:
-                print("\n>> No muto: ", str( individuos_mutar )," \n")
+                #print("\n>> mutado: ----------------------", str( individuos_mutar ) , " + lugar: ", lugar,"")
+            """ else:
+                print("\n>> No muto: --------------------- ", str( individuos_mutar ),"") """
         
         return individuos_mutar
             
+    def verificar_PODA(self, pM, individuoMutado_list, individuosInicial_list, diccionario_espacios_list, tamContenedor ):
+
+        print("\nIniciando PODA:\n")
+        individuos_completos = individuosInicial_list + individuoMutado_list
+
+        podado = []
+        if( len(individuos_completos) > pM ):
+            print("\nInicia PODA:\n")
+            ganacias_list = self.obtenerGanancias(individuos_completos, pM, diccionario_espacios_list, tamContenedor)
+            return self.Poda_iniciar(ganacias_list, pM)
+
+        # Graficar = {"maximo": maximo, "minimo": minimo, "promedio": proedio}
+        # Individuos_generacion = {"Graficar": datos_Graficar, "Individuos_generacion": podado}
+
+        else:
+            print("\nNo hay PODA:\n")
+            ganacias_list = self.obtenerGanancias(individuos_completos, pM, diccionario_espacios_list, tamContenedor)
+            return self.Poda_iniciar(ganacias_list, pM)
+        # Graficar = {"maximo": maximo, "minimo": minimo, "promedio": proedio}
+        # Individuos_generacion = {"Graficar": datos_Graficar, "Individuos_generacion": podado}
+    
+    def obtenerGanancias(self, individuoMutado_list, pM, diccionario_espacios_list, tamContenedor):
+        print(f"PODA _ poblacion maxima: {pM}")
+        individuo_ganancia = []
+
+        for individuo in individuoMutado_list:
+            print("Indivi: " ,individuo)
+            peso=0
+            costo = 0
+            for paquete in individuo:                
+                                
+                peso = peso + diccionario_espacios_list[paquete-1]["Espacio"]
+                if (peso <= tamContenedor):
+                    costo += diccionario_espacios_list[paquete-1]["Costo"]
+
+                    print("individuo: ", individuo, " -Costo: ", costo, " -peso: ", peso, " -contenedor:", tamContenedor)
+                    #print(f"ultimo: {paquete} - individuo: {individuo}")
+                else:
+                    peso = peso - diccionario_espacios_list[paquete-1]["Espacio"]
+                    break
+            print("individuo: ", individuo, " -Costo: ", costo, " -peso: ", peso, " -contenedor:", tamContenedor, "\n----")
+            individuo_ganancia.append({
+                "Individuo": individuo, 
+                "Ganancia": costo, 
+                "Espacio": peso, 
+                "Contenedor": tamContenedor
+                })
+
+        return individuo_ganancia
+
+    def Poda_iniciar(self, podado, pM):
+        podado_list = []
+        print("\nOrdenar\n")
+
+        podado = sorted(podado, key=lambda individuo: individuo["Ganancia"], reverse=True)
+
+        print("\nAntes de PODA:")
+        for x in podado:
+            print(x)
+        
+        datos_Graficar = self.datos_graficar(podado) # {"maximo": maximo, "minimo": minimo, "promedio": proedio}
+                
+        if ( pM < len(podado) ):
+            podado = podado[:pM]
+            print("\nPODA completa:")
+            for x in podado:
+                print(x)
+        # Graficar = {"maximo": maximo, "minimo": minimo, "promedio": proedio}
+        # Individuos_generacion = {"Graficar": datos_Graficar, "Individuos_generacion": podado}
+        podado_list.append( {"Graficar": datos_Graficar, "Individuos_generacion": podado} ) #{"Graficar": datos_Graficar, "Individuos_generacion": podado}
+        
+        print(" \n>>>>>>>>>>>>>>>>  Max Min Prom    <<<<<<<<<<<<<<<<<<<<<<<<<< \n")
+        print(datos_Graficar)
+        print(" \n>>>>>>>>>>>>>>>>  ---------    <<<<<<<<<<<<<<<<<<<<<<<<<< \n")
+
+        # datos_Graficar
+        return podado_list
+    
+    def datos_graficar(self, podado):        
+        print("Datos graficar")
+
+        maximo = podado[0]["Ganancia"]
+        minimo = podado[-1]["Ganancia"]
+
+        suma = 0
+        for i in range(0, len(podado) ):
+            print(i)
+            suma += podado[i]["Ganancia"]
+        
+        proedio = suma/ (len(podado) )
+        print(suma, " / ", len(podado))
+
+        return {"maximo": maximo, "minimo": minimo, "promedio": proedio}
 
 
 
+#quede acomodando al PODa
+#para graficar con y sin poda
